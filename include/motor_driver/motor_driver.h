@@ -50,6 +50,8 @@ private:
 
 	float position=0, velocity=0.0, torque=0, kp=0, kd=0;
 
+	double hz=100;
+
     ros::Publisher motor_state_publisher;
 
 

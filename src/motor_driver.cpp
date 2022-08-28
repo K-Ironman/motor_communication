@@ -75,9 +75,6 @@ void Motor::reading(){
 		if (num_bytes < 0) {
 			ROS_ERROR("Error reading: %s", strerror(errno));
 		}
-		if(num_bytes==0){
-			return;
-		}
 		strcat(read_data, read_buf);
 		
 		if(strlen(read_data)>24){
@@ -107,8 +104,8 @@ void Motor::writing(){
 		strcat(send_data, cmd_data);
 		send_data[23]='\r';
 		write(serial_port, send_data, 24);
-		usleep(10000);
-		//reading();
+		usleep(1000000/hz);
+		reading();
 		
 		//ROS_INFO("Sent Data %s", send_data);
 	}
