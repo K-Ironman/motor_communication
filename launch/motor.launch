@@ -1,0 +1,13 @@
+<launch>
+    <arg name="port_name" default="/dev/ttyUSB0"/>
+    <arg name="hz" default="100"/>
+    <arg name="max_torque" default="4"/>
+    <arg name="min_torque" default="-4"/>
+
+    <node pkg="motor_driver" type="motor_driver_node" name="motor_driver" output="screen">
+        <param name="port_name" value="$(arg port_name)"/>
+        <param name='hz' value='$(arg hz)'/>
+        <param name="max_torque" value='$(arg max_torque)'/>
+        <param name="min_torque" value="$(arg min_torque)"/>
+    </node>
+</launch>

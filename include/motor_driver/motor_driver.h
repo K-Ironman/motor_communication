@@ -40,8 +40,8 @@ private:
 			'f','f',
 			'f','f',
 			'f','d', '\r' };
-    char read_buf[1000];
-	char read_data[1000];
+    char read_buf[30];
+	char read_data[50];
     char header[24] = {'t', '0', '0', '1', '8'};
     char cmd_data[17] = "";
     string port_name = "/dev/ttyUSB0";
@@ -49,8 +49,8 @@ private:
     struct termios tty;
 
 	float position=0, velocity=0.0, torque=0, kp=0, kd=0;
-
-	double hz=100;
+	float max_torque=18, min_torque=-18; // default setting for ak80-9 motor
+	double hz=10;
 
     ros::Publisher motor_state_publisher;
 

@@ -7,7 +7,10 @@ Motor::Motor(ros::NodeHandle *nodehandle){
 	ros::NodeHandle nh(*nodehandle);
 	ROS_INFO("Motor Driver Node Activated");
 	ros::param::get("~port_name", port_name);
-
+	ros::param::get("~hz", hz);
+	ros::param::get("~min_torque", min_torque);
+    ros::param::get("~max_torque", max_torque);
+	ROS_INFO("Start Motor driver port name : %s, hz : %lf", port_name.c_str(), hz);
 	serial_port = open(port_name.c_str(), O_RDWR);
 	motor_state_publisher = nh.advertise<std_msgs::Float32MultiArray>("/motor/state", 1);
 
@@ -57,6 +60,7 @@ Motor::Motor(ros::NodeHandle *nodehandle){
 	pack_cmd(cmd_data,0.0,0.0,0.0,0.0, 0.0);
 	memset(&read_data, '\0', sizeof(read_data));
 	ROS_INFO("Activate Motor\n");
+	reading();
 	//boost::thread recieve_thread = boost::thread(boost::bind(&Motor::reading, this));
 
 	boost::thread send_thread = boost::thread(boost::bind(&Motor::writing, this));
@@ -67,7 +71,6 @@ void Motor::reading(){
 	// Normally you wouldn't do this memset() call, but since we will just receive
 	// ASCII data for this example, we'll set everything to 0 so we can
 	// call printf() easily.
-	
 	memset(&read_data, '\0', sizeof(read_data));
 	while(ros::ok()){
 		memset(&read_buf, '\0', sizeof(read_buf));
@@ -75,25 +78,32 @@ void Motor::reading(){
 		if (num_bytes < 0) {
 			ROS_ERROR("Error reading: %s", strerror(errno));
 		}
+		if(num_bytes == 0) continue;
 		strcat(read_data, read_buf);
 		
 		if(strlen(read_data)>24){
 			memset(&read_data, '\0', sizeof(read_data));	
-			return;
+			//return;
+			break;
 		}
 
-		printf("Read %i bytes. Received message: %s\n\n", num_bytes, read_buf);
-		printf("read data : %s\n", read_data);
-		if(read_buf[num_bytes-1] == '\r' && strlen(read_data)==24 ){
-			ROS_INFO("Pack data to %s\n", read_data);
+		//printf("Read %i bytes. Received message: %s\n\n", num_bytes, read_buf);
+		//printf("read data : %d, %s\n", strlen(read_data),read_data);
+		if(read_buf[num_bytes-1] == '\r' ){
+			//ROS_INFO("Pack data to %s\n", read_data);
 			vector<float> data;
 			data = unpack_reply(read_data);
 			std_msgs::Float32MultiArray msg;
 			msg.data = data;
 			motor_state_publisher.publish(msg);
-			return;
+			break;
+			//return;
 		}
+		
 	}
+	return;
+
+	
 }
 
 void Motor::writing(){
@@ -118,6 +128,14 @@ void Motor::cmd_data_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 	position = msg->data[2];
 	velocity = msg->data[3];
 	torque = msg->data[4];
+	if(torque>=max_torque){
+		ROS_WARN("Dangerous!! Too high torque, Auto matically set %f from %f", max_torque, torque);
+		torque = max_torque;
+	}
+	else if(torque<=min_torque){
+		ROS_WARN("Dangerous!! Too high torque, Auto matically set %f from %f", min_torque, torque);
+		torque = min_torque;
+	}
 	pack_cmd(cmd_data, position, velocity, kp, kd, torque);
 }
 
