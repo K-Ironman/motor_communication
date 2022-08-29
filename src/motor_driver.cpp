@@ -136,7 +136,7 @@ void Motor::cmd_data_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 		ROS_WARN("Dangerous!! Too high torque, Auto matically set %f from %f", min_torque, torque);
 		torque = min_torque;
 	}
-	pack_cmd(cmd_data, position, velocity, kp, kd, torque);
+	pack_cmd(cmd_data, position, velocity, kp, kd, -torque);
 }
 
 Motor::~Motor(){
